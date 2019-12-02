@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -20,9 +21,10 @@ var variables internal.MapFlags
 func init() {
 	flag.IntVar(&config.ProjectID, "p-id", 0, "Project ID")
 	flag.StringVar(&config.UserToken, "u-token", "", "User token")
-	flag.StringVar(&config.PipelineToken, "p-token", "", "Pipeline token (u-token is used when empty)")
+	flag.StringVar(&config.PipelineToken, "p-token", "", "Pipeline token")
 	flag.StringVar(&config.Ref, "ref", "master", "Ref")
 	flag.StringVar(&config.GitlabURL, "url", "https://gitlab.com", "Gitlab URL")
+	flag.DurationVar(&config.Timeout, "t", 30*time.Minute, "Timeout for waiting for pipeline to finish")
 	flag.Var(&variables, "v", "Variables")
 }
 
@@ -46,7 +48,7 @@ func main() {
 func parseConfig() error {
 	flag.Parse()
 	config.Variables = variables
-	required := []string{"u-token", "p-id"}
+	required := []string{"u-token", "p-token", "p-id"}
 	var err error
 	flag.VisitAll(func(f *flag.Flag) {
 		for _, r := range required {
@@ -55,14 +57,14 @@ func parseConfig() error {
 			}
 		}
 	})
-	if config.PipelineToken == "" {
-		config.PipelineToken = config.UserToken
-	}
 	return err
 }
 
 func createGitlabClient(url, token string) (*gitlab.Client, error) {
 	httpClient := &http.Client{Timeout: httpTimeout}
+	if strings.HasSuffix(url, "/api/v4") {
+		url = strings.TrimSuffix(url, "/api/v4")
+	}
 	gitlabClient := gitlab.NewClient(httpClient, token)
 	if err := gitlabClient.SetBaseURL(url); err != nil {
 		return nil, fmt.Errorf("failed to set %v as base url: %w", url, err)
