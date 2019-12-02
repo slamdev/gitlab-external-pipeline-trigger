@@ -103,6 +103,7 @@ func (t *trigger) outputPipelineLogs(ctx context.Context, id int) error {
 		if err := t.outputJobLogs(ctx, job.ID); err != nil {
 			return fmt.Errorf("failed to output job logs. %w", err)
 		}
+		fmt.Println("---")
 	}
 	return nil
 }
