@@ -18,9 +18,9 @@ var config internal.Config
 var variables internal.MapFlags
 
 func init() {
-	flag.StringVar(&config.PipelineToken, "p-token", "", "Pipeline token")
-	flag.StringVar(&config.UserToken, "u-token", "", "User token")
 	flag.IntVar(&config.ProjectID, "p-id", 0, "Project ID")
+	flag.StringVar(&config.UserToken, "u-token", "", "User token")
+	flag.StringVar(&config.PipelineToken, "p-token", "", "Pipeline token (u-token is used when empty)")
 	flag.StringVar(&config.Ref, "ref", "master", "Ref")
 	flag.StringVar(&config.GitlabURL, "url", "https://gitlab.com", "Gitlab URL")
 	flag.Var(&variables, "v", "Variables")
@@ -46,7 +46,7 @@ func main() {
 func parseConfig() error {
 	flag.Parse()
 	config.Variables = variables
-	required := []string{"p-token", "u-token", "p-id"}
+	required := []string{"u-token", "p-id"}
 	var err error
 	flag.VisitAll(func(f *flag.Flag) {
 		for _, r := range required {
@@ -55,6 +55,9 @@ func parseConfig() error {
 			}
 		}
 	})
+	if config.PipelineToken == "" {
+		config.PipelineToken = config.UserToken
+	}
 	return err
 }
 
