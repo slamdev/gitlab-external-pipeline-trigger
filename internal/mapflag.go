@@ -14,7 +14,7 @@ func (i *MapFlags) String() string {
 }
 
 func (i *MapFlags) Set(value string) error {
-	parsed := strings.Split(value, ":")
+	parsed := strings.SplitN(value, ":", 2)
 	if len(parsed) != 2 {
 		return errors.New("key value pair should be split with : ")
 	}
